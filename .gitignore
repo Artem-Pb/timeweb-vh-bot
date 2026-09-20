@@ -5,5 +5,4 @@ venv/
 .env
 .DS_Store
 *.log
-key_for_api.env
 .idea

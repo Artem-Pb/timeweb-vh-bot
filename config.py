@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv("key_for_api.env")
+load_dotenv(".env")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_KEY = os.getenv("TW_API_KEY")
 TOKEN = os.getenv("TOKEN")
