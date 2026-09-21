@@ -18,29 +18,7 @@ def get_start_keyboard() -> InlineKeyboardMarkup:
     inl.adjust(1, 1, 1)
     return inl.as_markup()
 
-def get_domains() -> InlineKeyboardMarkup:
-    inl = InlineKeyboardBuilder()
-    inl.add(
-        InlineKeyboardButton(
-            text="Домой/назад",
-            callback_data="back"
-        )
-    )
-    inl.adjust(1)
-    return inl.as_markup()
-
-def get_sites() -> InlineKeyboardMarkup:
-    inl = InlineKeyboardBuilder()
-    inl.add(
-        InlineKeyboardButton(
-            text="Домой/назад",
-            callback_data="back"
-        )
-    )
-    inl.adjust(1)
-    return inl.as_markup()
-
-def get_balance() -> InlineKeyboardMarkup:
+def get_back_keyboard() -> InlineKeyboardMarkup:
     inl = InlineKeyboardBuilder()
     inl.add(
         InlineKeyboardButton(
