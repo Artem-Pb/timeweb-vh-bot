@@ -5,7 +5,6 @@ from aiogram import F, Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 
-import exeptions
 from keybords import get_start_keyboard, get_domains, get_sites, get_balance
 from service import check_balance, check_domains, check_sites
 from exeptions import TimewebApiError, TimewebDomainsNotFound, TimewebSiteIsNotFound
