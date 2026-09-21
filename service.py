@@ -27,11 +27,11 @@ async def check_balance(session: aiohttp.ClientSession) -> list[dict]:
 
 async def check_sites(session: aiohttp.ClientSession) -> list[dict]:
     all_sites = await _get(session, ApiEndpoint.URL_FOR_SITE.value, ApiEndpoint.HEADERS.value)
-    return await _extract_sites(all_sites)
+    return _extract_sites(all_sites)
 
 async def check_domains(session: aiohttp.ClientSession) -> list[dict]:
     all_domains = await _get(session, ApiEndpoint.URL_FOR_SITE.value, ApiEndpoint.HEADERS.value)
-    return await _extract_domains(all_domains)
+    return _extract_domains(all_domains)
 
 async def _get(session: aiohttp.ClientSession, url: str, headers: dict) -> list[dict] :
     try:
@@ -51,13 +51,13 @@ async def _get(session: aiohttp.ClientSession, url: str, headers: dict) -> list[
         logger.exception(texts.LogTexts.SITE_IS_NOT_AVAILABLE.value)
         raise
 
-async def _extract_domains(result: list[dict]) -> list[dict] :
+def _extract_domains(result: list[dict]) -> list[dict] :
     res = [domain for sites in result for domain in sites.get("domains", [])]
     if not res:
         raise exeptions.TimewebDomainsNotFound()
     return res
 
-async def _extract_sites(result: list[dict]) -> list[dict] :
+def _extract_sites(result: list[dict]) -> list[dict] :
     res = [site.get("directory", "") for site in result]
     if not res:
         raise exeptions.TimewebSiteIsNotFound()
