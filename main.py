@@ -5,6 +5,7 @@ import aiohttp
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 
 import config
@@ -37,7 +38,8 @@ async def shutdown(dispatcher: Dispatcher):
 
 
 async def main() -> None:
-    bot = Bot(token=config.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    session = AiohttpSession(proxy=config.PROXY_URL) if config.PROXY_URL else None
+    bot = Bot(token=config.BOT_TOKEN, session=session, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
 
     dp.startup.register(startup)

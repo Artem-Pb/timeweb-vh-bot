@@ -35,6 +35,7 @@ pip install -r requirements.txt
 | `TW_API_KEY` | Получить ключ через поддержку [Timeweb.Hosting](https://hosting.timeweb.ru/support/help/other-question). Ключ имеет вид: `a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6` |
 | `TOKEN`      | Получить с помощью [API-запроса](#получение-token), используя `TW_API_KEY`, логин и пароль аккаунта [Timeweb.Hosting](https://hosting.timeweb.ru/login). ключ имеет вид: `a1b2c3d4-11111111111111-e5f6a7b8c9d0` |
 | `LOGIN`      | Логин аккаунта Timeweb.Hosting, к которому подключается бот |
+| `PROXY_URL`  | Необязательно. SOCKS5-прокси для запросов к Telegram Bot API вида `socks5://user:password@host:port`. Нужен только если Telegram блокируется на уровне хостинга/региона (обнаруживается по таймауту на этапе TCP-подключения к `api.telegram.org:443`); если переменная не задана, бот подключается напрямую |
 
 ### Получение TOKEN
 
