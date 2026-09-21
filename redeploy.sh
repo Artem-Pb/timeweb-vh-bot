@@ -20,15 +20,15 @@ if [ -z "$LOOP_PID" ]; then
     disown
 else
     echo "== цикл автозапуска уже работает (PID $LOOP_PID), перезапускаю бота =="
-    BOT_PID=$(pgrep -f "\.venv/bin/python3 main\.py" || true)
-    if [ -n "$BOT_PID" ]; then
-        kill "$BOT_PID"
+    BOT_PIDS=$(pgrep -x -f "\.venv/bin/python3 main\.py" || true)
+    if [ -n "$BOT_PIDS" ]; then
+        echo "$BOT_PIDS" | xargs kill
     fi
 fi
 
 sleep 6
 
-NEW_PID=$(pgrep -f "\.venv/bin/python3 main\.py" || true)
+NEW_PID=$(pgrep -x -f "\.venv/bin/python3 main\.py" || true)
 if [ -n "$NEW_PID" ]; then
     echo "Бот работает, PID $NEW_PID"
 else
