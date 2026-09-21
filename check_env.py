@@ -40,31 +40,33 @@ def check_required_vars() -> bool:
 
 async def check_telegram() -> bool:
     via = "через PROXY_URL" if config.PROXY_URL else "напрямую"
+    title = f"Telegram Bot API ({via})"
     session = AiohttpSession(proxy=config.PROXY_URL) if config.PROXY_URL else None
     bot = Bot(token=config.BOT_TOKEN, session=session)
     try:
         me = await bot.get_me(request_timeout=10)
-        _report(f"Telegram Bot API доступен ({via})", True, f"@{me.username}")
+        _report(title, True, f"доступен, @{me.username}")
         return True
     except TelegramAPIError as e:
-        _report(f"Telegram Bot API доступен ({via})", False, str(e))
+        _report(title, False, str(e))
         return False
     except (aiohttp.ClientError, asyncio.TimeoutError, OSError) as e:
         hint = "" if config.PROXY_URL else " -- если Telegram блокируется в этом регионе, задай PROXY_URL в .env"
-        _report(f"Telegram Bot API доступен ({via})", False, f"{e}{hint}")
+        _report(title, False, f"{e}{hint}")
         return False
     finally:
         await bot.session.close()
 
 
 async def check_timeweb() -> bool:
+    title = "Timeweb API"
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         try:
             await service.check_balance(session)
-            _report("Timeweb API доступен, авторизация верна", True)
+            _report(title, True, "доступен, авторизация верна")
             return True
         except Exception as e:
-            _report("Timeweb API доступен, авторизация верна", False, str(e))
+            _report(title, False, str(e))
             return False
 
 
