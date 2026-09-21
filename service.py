@@ -1,23 +1,36 @@
+from enum import Enum
 from types import CoroutineType
 from typing import Any
 
 import aiohttp
 import logging
 
+import config
 import exeptions
 import texts
 
 logger = logging.getLogger(__name__)
 
+
+class ApiEndpoint(Enum):
+    URL_FOR_BALANCE = f"https://api.timeweb.ru/v1.1/finances/accounts/{config.LOGIN}"
+    URL_FOR_SITE = f"https://api.timeweb.ru/v1.1/sites/{config.LOGIN}"
+    HEADERS = {
+        "Accept": "application/json",
+        "x-app-key": f"{config.API_KEY}",
+        "Authorization": f"Bearer {config.TOKEN}"
+    }
+
+
 async def check_balance(session: aiohttp.ClientSession) -> list[dict]:
-    return await _get(session, texts.ApiEndpoint.URL_FOR_BALANCE.value, texts.ApiEndpoint.HEADERS.value)
+    return await _get(session, ApiEndpoint.URL_FOR_BALANCE.value, ApiEndpoint.HEADERS.value)
 
 async def check_sites(session: aiohttp.ClientSession) -> list[dict]:
-    all_sites = await _get(session, texts.ApiEndpoint.URL_FOR_SITE.value, texts.ApiEndpoint.HEADERS.value)
+    all_sites = await _get(session, ApiEndpoint.URL_FOR_SITE.value, ApiEndpoint.HEADERS.value)
     return await _extract_sites(all_sites)
 
 async def check_domains(session: aiohttp.ClientSession) -> list[dict]:
-    all_domains = await _get(session, texts.ApiEndpoint.URL_FOR_SITE.value, texts.ApiEndpoint.HEADERS.value)
+    all_domains = await _get(session, ApiEndpoint.URL_FOR_SITE.value, ApiEndpoint.HEADERS.value)
     return await _extract_domains(all_domains)
 
 async def _get(session: aiohttp.ClientSession, url: str, headers: dict) -> list[dict] :
