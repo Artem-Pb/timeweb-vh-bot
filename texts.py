@@ -9,6 +9,8 @@ class UserTexts(Enum):
     DOMAINS_LOADING = "Какие же там домены..."
     SITES_LOADING = "Гляну, какие сайты у тебя есть..."
     BALANCE_RESULT = "Твой баланс: {value}"
+    DOMAINS_RESULT = "Твои домены ({count}):\n\n{items}"
+    SITES_RESULT = "Твои сайты ({count}):\n\n{items}"
     DOMAINS_EMPTY = "Доменов пока нет"
     SITES_EMPTY = "Сайтов пока нет"
     BALANCE_ERROR = "Не удалось получить баланс — сервер ответил с ошибкой"

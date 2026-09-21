@@ -1,5 +1,6 @@
 import aiohttp
 import logging
+from html import escape
 
 from aiogram import F, Router
 from aiogram.filters import CommandStart
@@ -22,6 +23,16 @@ async def _handle_api_call(callback: CallbackQuery, http_session: aiohttp.Client
         await callback.message.edit_text(error_messages[type(e)], reply_markup=get_back_keyboard())
     else:
         await callback.message.edit_text(format_result(result), reply_markup=get_back_keyboard())
+
+
+def _format_domains(result: list[str]) -> str:
+    items = "\n".join(f'• <a href="https://{escape(d)}">{escape(d)}</a>' for d in result)
+    return UserTexts.DOMAINS_RESULT.value.format(count=len(result), items=items)
+
+
+def _format_sites(result: list[str]) -> str:
+    items = "\n".join(f"• {escape(s)}" for s in result)
+    return UserTexts.SITES_RESULT.value.format(count=len(result), items=items)
 
 
 @user_router.message(CommandStart())
@@ -51,7 +62,7 @@ async def domains(callback: CallbackQuery, http_session: aiohttp.ClientSession):
     await callback.answer(UserTexts.DOMAINS_LOADING.value)
     await _handle_api_call(
         callback, http_session, check_domains,
-        format_result=lambda result: "\n".join(result),
+        format_result=_format_domains,
         error_messages={
             TimewebDomainsNotFound: UserTexts.DOMAINS_EMPTY.value,
             TimewebApiError: UserTexts.DOMAINS_ERROR.value,
@@ -65,7 +76,7 @@ async def sites(callback: CallbackQuery, http_session: aiohttp.ClientSession):
     await callback.answer(UserTexts.SITES_LOADING.value)
     await _handle_api_call(
         callback, http_session, check_sites,
-        format_result=lambda result: "\n".join(result),
+        format_result=_format_sites,
         error_messages={
             TimewebSiteIsNotFound: UserTexts.SITES_EMPTY.value,
             TimewebApiError: UserTexts.SITES_ERROR.value,
