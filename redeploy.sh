@@ -26,13 +26,20 @@ else
     fi
 fi
 
-sleep 6
+echo "== жду перезапуск (до 20 секунд: SIGTERM + пауза цикла + старт процесса) =="
+NEW_PID=""
+for i in $(seq 1 10); do
+    sleep 2
+    NEW_PID=$(pgrep -x -f "\.venv/bin/python3 main\.py" || true)
+    if [ -n "$NEW_PID" ]; then
+        break
+    fi
+done
 
-NEW_PID=$(pgrep -x -f "\.venv/bin/python3 main\.py" || true)
 if [ -n "$NEW_PID" ]; then
     echo "Бот работает, PID $NEW_PID"
 else
-    echo "ВНИМАНИЕ: бот не поднялся, последние строки autostart.log:"
+    echo "ВНИМАНИЕ: бот не поднялся за 20 секунд, последние строки autostart.log:"
     tail -n 20 autostart.log
     exit 1
 fi
