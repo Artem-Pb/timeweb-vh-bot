@@ -8,11 +8,10 @@ from aiogram.types import Message, CallbackQuery
 from keybords import get_start_keyboard, get_back_keyboard
 from service import check_balance, check_domains, check_sites
 from exeptions import TimewebApiError, TimewebDomainsNotFound, TimewebSiteIsNotFound
+from texts import UserTexts
 
 logger = logging.getLogger(__name__)
 user_router = Router()
-
-NETWORK_ERROR_TEXT = "Сервер временно недоступен, попробуйте позже"
 
 
 async def _handle_api_call(callback: CallbackQuery, http_session: aiohttp.ClientSession,
@@ -28,9 +27,7 @@ async def _handle_api_call(callback: CallbackQuery, http_session: aiohttp.Client
 @user_router.message(CommandStart())
 async def cmd_start(message: Message):
     await message.answer(
-        "Здорова,я ботянский! помогу бе по работе с аккаунтом таймевеба. "
-        "Могу тебе показать сколько денег и какие домены есть и какие есть сайты. "
-        ,
+        UserTexts.START.value,
         reply_markup=get_start_keyboard()
     )
     logger.info("Отправлен ответ человеку!")
@@ -38,41 +35,41 @@ async def cmd_start(message: Message):
 
 @user_router.callback_query(F.data == "balance")
 async def balance(callback: CallbackQuery, http_session: aiohttp.ClientSession):
-    await callback.answer("Считаем денежки...")
+    await callback.answer(UserTexts.BALANCE_LOADING.value)
     await _handle_api_call(
         callback, http_session, check_balance,
-        format_result=lambda result: f"Ваш баланс = {result.get('balance')}",
+        format_result=lambda result: UserTexts.BALANCE_RESULT.value.format(value=result.get("balance")),
         error_messages={
-            TimewebApiError: "Не удалось получить баланс — сервер ответил с ошибкой",
-            aiohttp.ClientError: NETWORK_ERROR_TEXT,
+            TimewebApiError: UserTexts.BALANCE_ERROR.value,
+            aiohttp.ClientError: UserTexts.NETWORK_ERROR.value,
         },
     )
 
 
 @user_router.callback_query(F.data == "domain")
 async def domains(callback: CallbackQuery, http_session: aiohttp.ClientSession):
-    await callback.answer("Какие же там домены...")
+    await callback.answer(UserTexts.DOMAINS_LOADING.value)
     await _handle_api_call(
         callback, http_session, check_domains,
         format_result=lambda result: "\n".join(result),
         error_messages={
-            TimewebDomainsNotFound: "Нет доменов",
-            TimewebApiError: "Не удалось получить домены - сервер ответил с ошибкой",
-            aiohttp.ClientError: NETWORK_ERROR_TEXT,
+            TimewebDomainsNotFound: UserTexts.DOMAINS_EMPTY.value,
+            TimewebApiError: UserTexts.DOMAINS_ERROR.value,
+            aiohttp.ClientError: UserTexts.NETWORK_ERROR.value,
         },
     )
 
 
 @user_router.callback_query(F.data == "sites")
 async def sites(callback: CallbackQuery, http_session: aiohttp.ClientSession):
-    await callback.answer()
+    await callback.answer(UserTexts.SITES_LOADING.value)
     await _handle_api_call(
         callback, http_session, check_sites,
         format_result=lambda result: "\n".join(result),
         error_messages={
-            TimewebSiteIsNotFound: "Нет сайтов",
-            TimewebApiError: "Не удалось получить сайты - сервер ответил ошибкой",
-            aiohttp.ClientError: NETWORK_ERROR_TEXT,
+            TimewebSiteIsNotFound: UserTexts.SITES_EMPTY.value,
+            TimewebApiError: UserTexts.SITES_ERROR.value,
+            aiohttp.ClientError: UserTexts.NETWORK_ERROR.value,
         },
     )
 
@@ -80,6 +77,6 @@ async def sites(callback: CallbackQuery, http_session: aiohttp.ClientSession):
 async def back(callback: CallbackQuery):
     await callback.answer()
     await callback.message.edit_text(
-        text="Welcome to home!",
+        text=UserTexts.START.value,
         reply_markup=get_start_keyboard()
     )
