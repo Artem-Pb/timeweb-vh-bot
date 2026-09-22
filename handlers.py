@@ -8,7 +8,7 @@ from aiogram.types import Message, CallbackQuery
 
 from keybords import get_start_keyboard, get_back_keyboard
 from service import check_balance, check_domains, check_sites
-from exeptions import TimewebApiError, TimewebDomainsNotFound, TimewebSiteIsNotFound
+from exeptions import TimewebApiError, TimewebDomainsNotFound, TimewebSiteIsNotFound, TimewebAuthError
 from texts import UserTexts
 
 logger = logging.getLogger(__name__)
@@ -52,6 +52,7 @@ async def balance(callback: CallbackQuery, http_session: aiohttp.ClientSession):
         format_result=lambda result: UserTexts.BALANCE_RESULT.value.format(value=result.get("balance")),
         error_messages={
             TimewebApiError: UserTexts.BALANCE_ERROR.value,
+            TimewebAuthError: UserTexts.AUTH_ERROR.value,
             aiohttp.ClientError: UserTexts.NETWORK_ERROR.value,
         },
     )
@@ -66,6 +67,7 @@ async def domains(callback: CallbackQuery, http_session: aiohttp.ClientSession):
         error_messages={
             TimewebDomainsNotFound: UserTexts.DOMAINS_EMPTY.value,
             TimewebApiError: UserTexts.DOMAINS_ERROR.value,
+            TimewebAuthError: UserTexts.AUTH_ERROR.value,
             aiohttp.ClientError: UserTexts.NETWORK_ERROR.value,
         },
     )
@@ -80,6 +82,7 @@ async def sites(callback: CallbackQuery, http_session: aiohttp.ClientSession):
         error_messages={
             TimewebSiteIsNotFound: UserTexts.SITES_EMPTY.value,
             TimewebApiError: UserTexts.SITES_ERROR.value,
+            TimewebAuthError: UserTexts.AUTH_ERROR.value,
             aiohttp.ClientError: UserTexts.NETWORK_ERROR.value,
         },
     )

@@ -6,3 +6,6 @@ class TimewebDomainsNotFound(Exception):
 
 class TimewebSiteIsNotFound(Exception):
     pass
+
+class TimewebAuthError(Exception):
+    pass

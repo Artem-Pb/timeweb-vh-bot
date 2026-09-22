@@ -1,6 +1,4 @@
 from enum import Enum
-from types import CoroutineType
-from typing import Any
 
 import aiohttp
 import logging
@@ -41,6 +39,12 @@ async def _get(session: aiohttp.ClientSession, url: str, headers: dict) -> list[
             if response.status == 200:
                 data = await response.json()
                 return data
+            if  response.status == 401:
+                error_msg = await response.text()
+                logger.error(f"{texts.LogTexts.AUTH_NOT_AVAILABLE.value} -> {url} : "
+                             f"{texts.LogTexts.CODE.value} {response.status}, "
+                             f"{texts.LogTexts.ANSWER.value} {error_msg}")
+                raise exeptions.TimewebAuthError(error_msg)
             else:
                 error_msg = await response.text()
                 logger.error(f"{texts.LogTexts.API_NOT_FOUND.value} {url}: "

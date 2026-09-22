@@ -13,6 +13,7 @@ class UserTexts(Enum):
     SITES_RESULT = "Твои сайты ({count}):\n\n{items}"
     DOMAINS_EMPTY = "Доменов пока нет"
     SITES_EMPTY = "Сайтов пока нет"
+    AUTH_ERROR = "Токен недействителен, обратитесь к разработчику"
     BALANCE_ERROR = "Не удалось получить баланс — сервер ответил с ошибкой"
     DOMAINS_ERROR = "Не удалось получить домены — сервер ответил с ошибкой"
     SITES_ERROR = "Не удалось получить сайты — сервер ответил с ошибкой"
@@ -26,6 +27,7 @@ class UserTexts(Enum):
 class LogTexts(Enum):
     CHECK_STATUS_API = "Проверка API HTTP -> "
     API_NOT_FOUND = "API сейчас недоступен: "
+    AUTH_NOT_AVAILABLE = "Токен закончился, необходимо сменить или недействительный"
     CODE = "Код ошибки: "
     ANSWER = "Ответ: "
     SITE_IS_NOT_AVAILABLE = "Ошибка сети: сайт недоступен"
