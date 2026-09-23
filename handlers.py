@@ -1,5 +1,6 @@
 import aiohttp
 import logging
+import functools
 from html import escape
 
 from aiogram import F, Router
@@ -14,6 +15,15 @@ from texts import UserTexts
 logger = logging.getLogger(__name__)
 user_router = Router()
 
+def log_action(original_funct):
+    @functools.wraps(original_funct)
+    async def wrapper_log(*args, **kwargs):
+        event = args[0]
+        user_id = event.from_user.id
+        logger.info(f"{user_id}-> {original_funct.__name__}")
+        result = await original_funct(*args, **kwargs)
+        return result
+    return wrapper_log
 
 async def _handle_api_call(callback: CallbackQuery, http_session: aiohttp.ClientSession,
                             fetch, format_result, error_messages: dict) -> None:
@@ -36,6 +46,7 @@ def _format_sites(result: list[str]) -> str:
 
 
 @user_router.message(CommandStart())
+@log_action
 async def cmd_start(message: Message):
     await message.answer(
         UserTexts.START.value,
@@ -45,6 +56,7 @@ async def cmd_start(message: Message):
 
 
 @user_router.callback_query(F.data == "balance")
+@log_action
 async def balance(callback: CallbackQuery, http_session: aiohttp.ClientSession):
     await callback.answer(UserTexts.BALANCE_LOADING.value)
     await _handle_api_call(
@@ -59,6 +71,7 @@ async def balance(callback: CallbackQuery, http_session: aiohttp.ClientSession):
 
 
 @user_router.callback_query(F.data == "domain")
+@log_action
 async def domains(callback: CallbackQuery, http_session: aiohttp.ClientSession):
     await callback.answer(UserTexts.DOMAINS_LOADING.value)
     await _handle_api_call(
@@ -74,6 +87,7 @@ async def domains(callback: CallbackQuery, http_session: aiohttp.ClientSession):
 
 
 @user_router.callback_query(F.data == "sites")
+@log_action
 async def sites(callback: CallbackQuery, http_session: aiohttp.ClientSession):
     await callback.answer(UserTexts.SITES_LOADING.value)
     await _handle_api_call(
@@ -88,6 +102,7 @@ async def sites(callback: CallbackQuery, http_session: aiohttp.ClientSession):
     )
 
 @user_router.callback_query(F.data == "back")
+@log_action
 async def back(callback: CallbackQuery):
     await callback.answer()
     await callback.message.edit_text(
