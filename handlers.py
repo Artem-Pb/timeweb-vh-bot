@@ -52,7 +52,6 @@ async def cmd_start(message: Message):
         UserTexts.START.value,
         reply_markup=get_start_keyboard()
     )
-    logger.info("Отправлен ответ человеку!")
 
 
 @user_router.callback_query(F.data == "balance")

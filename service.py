@@ -34,7 +34,7 @@ async def check_domains(session: aiohttp.ClientSession) -> list[dict]:
 async def _get(session: aiohttp.ClientSession, url: str, headers: dict) -> list[dict] :
     try:
         async with session.get(url, headers=headers) as response:
-            logger.info(f"{texts.LogTexts.CHECK_STATUS_API.value} -> {response.status}")
+            logger.info(f"{texts.LogTexts.CHECK_STATUS_API.value}{response.status}")
 
             if response.status == 200:
                 data = await response.json()
