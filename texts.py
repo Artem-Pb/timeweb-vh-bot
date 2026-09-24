@@ -28,6 +28,7 @@ class LogTexts(Enum):
     CHECK_STATUS_API = "Проверка API HTTP -> "
     API_NOT_FOUND = "API сейчас недоступен: "
     AUTH_NOT_AVAILABLE = "Токен закончился, необходимо сменить или недействительный"
+    TELEGRAM_BAD_REQUEST = "message is not modified"
     CODE = "Код ошибки: "
     ANSWER = "Ответ: "
     SITE_IS_NOT_AVAILABLE = "Ошибка сети: сайт недоступен"

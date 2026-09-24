@@ -6,7 +6,9 @@ from html import escape
 from aiogram import F, Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
+from aiogram.exceptions import TelegramBadRequest
 
+import texts
 from keybords import get_start_keyboard, get_back_keyboard
 from service import check_balance, check_domains, check_sites
 from exeptions import TimewebApiError, TimewebDomainsNotFound, TimewebSiteIsNotFound, TimewebAuthError
@@ -14,6 +16,17 @@ from texts import UserTexts
 
 logger = logging.getLogger(__name__)
 user_router = Router()
+
+async def _save_edit(callback: CallbackQuery, text: str, keyboard) -> None:
+    try:
+        await callback.message.edit_text(
+            text,
+            reply_markup=keyboard)
+    except TelegramBadRequest as e:
+        if texts.LogTexts.TELEGRAM_BAD_REQUEST.value in str(e):
+            pass
+        else:
+            raise
 
 def log_action(original_funct):
     @functools.wraps(original_funct)
@@ -30,10 +43,10 @@ async def _handle_api_call(callback: CallbackQuery, http_session: aiohttp.Client
     try:
         result = await fetch(http_session)
     except tuple(error_messages) as e:
-        await callback.message.edit_text(error_messages[type(e)], reply_markup=get_back_keyboard())
+        text = error_messages[type(e)]
     else:
-        await callback.message.edit_text(format_result(result), reply_markup=get_back_keyboard())
-
+        text = format_result(result)
+    await _save_edit(callback, text, get_back_keyboard())
 
 def _format_domains(result: list[str]) -> str:
     items = "\n".join(f'• <a href="https://{escape(d)}">{escape(d)}</a>' for d in result)
@@ -104,7 +117,4 @@ async def sites(callback: CallbackQuery, http_session: aiohttp.ClientSession):
 @log_action
 async def back(callback: CallbackQuery):
     await callback.answer()
-    await callback.message.edit_text(
-        text=UserTexts.START.value,
-        reply_markup=get_start_keyboard()
-    )
+    await _save_edit(callback, UserTexts.START.value, get_start_keyboard())
