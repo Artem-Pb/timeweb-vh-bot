@@ -1,10 +1,14 @@
 # Бот для работы с API Timeweb Hosting
 
-Простой Telegram-бот, который обращается к API Timeweb Hosting и предоставляет данные из аккаунта пользователя по запросу:
+Мультипользовательский Telegram-бот, который обращается к API Timeweb Hosting и предоставляет данные из аккаунта пользователя по запросу:
 
 - баланс;
 - список доменов;
 - список сайтов.
+
+Каждый пользователь авторизуется командой `/login` под **своим** аккаунтом Timeweb.Hosting (логин + пароль). Пароль используется один раз — для обмена на токен через `POST /v1.2/access` — и нигде не сохраняется; сообщение с паролем бот сразу удаляет из чата. В PostgreSQL хранится только связка `telegram_id → (логин, токен)`. Пока пользователь не авторизован, кнопки баланса/сайтов/доменов предлагают выполнить `/login`.
+
+Отдельного эндпоинта «список доменов аккаунта» в публичном API Timeweb нет (проверено по [официальной документации](https://timeweb.com/ru/docs/publichnyj-api-timeweb/metody-api-dlya-virtualnogo-hostinga/): все методы работают с уже известным именем домена), поэтому домены собираются из вложенного поля `domains` ответа `GET /v1.1/sites/{login}`. Домен, не привязанный ни к одному сайту, через публичный API недоступен.
 
 ## Требования
 
@@ -32,19 +36,11 @@ pip install -r requirements.txt
 | Переменная   | Способ получения |
 | ------------ | ---------------- |
 | `BOT_TOKEN`  | Перейти в [BotFather](https://t.me/BotFather), создать бота и получить его токен вида `1234567890:AAEExampleFakeTokenNotReal12345` |
-| `TW_API_KEY` | Получить ключ через поддержку [Timeweb.Hosting](https://hosting.timeweb.ru/support/help/other-question). Ключ имеет вид: `a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6` |
-| `TOKEN`      | Получить с помощью [API-запроса](#получение-token), используя `TW_API_KEY`, логин и пароль аккаунта [Timeweb.Hosting](https://hosting.timeweb.ru/login). ключ имеет вид: `a1b2c3d4-11111111111111-e5f6a7b8c9d0` |
-| `LOGIN`      | Логин аккаунта Timeweb.Hosting, к которому подключается бот |
+| `TW_API_KEY` | Ключ приложения — один на всё приложение, используется при авторизации любого пользователя. Получить через поддержку [Timeweb.Hosting](https://hosting.timeweb.ru/support/help/other-question). Ключ имеет вид: `a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6` |
 | `PROXY_URL`  | Необязательно. SOCKS5-прокси для запросов к Telegram Bot API вида `socks5://user:password@host:port`. Нужен только если Telegram блокируется на уровне хостинга/региона (обнаруживается по таймауту на этапе TCP-подключения к `api.telegram.org:443`); если переменная не задана, бот подключается напрямую |
+| `POSTGRESQL_HOST`, `POSTGRESQL_PORT`, `POSTGRESQL_USER`, `POSTGRESQL_PASSWORD`, `POSTGRESQL_DBNAME` | Параметры подключения к PostgreSQL, где хранятся токены пользователей. Таблица `users` создаётся ботом автоматически при старте. Если база ограничивает доступ по IP — добавьте адрес сервера бота в список разрешённых |
 
-### Получение TOKEN
-
-```bash
-curl -X POST "https://api.timeweb.ru/v1.2/access" \
-  -H "accept: application/json" \
-  -H "x-app-key: TW_API_KEY" \
-  -u {login}:{password}
-````
+Логин и токен Timeweb в `.env` больше не нужны: каждый пользователь получает свой токен через `/login` (под капотом — `POST https://api.timeweb.ru/v1.2/access` с заголовком `x-app-key: TW_API_KEY` и Basic-авторизацией логин:пароль).
 
 ## Запуск
 
@@ -58,7 +54,9 @@ python main.py
 
 ## Деплой
 
-Инструкция для запуска на shared/VPS-хостинге по SSH, без root и без `systemd` (актуально, например, для тарифов Timeweb ВХ).
+Инструкция для запуска на shared/VPS-хостинге по SSH, без root и без `systemd` (актуально, например, для тарифов Timeweb ВХ). На VDS с root-доступом то же самое работает без изменений; при желании автоперезапуск можно отдать `systemd`.
+
+**Важно при переезде на новый сервер:** один `BOT_TOKEN` не может одновременно опрашивать Telegram с двух машин (`TelegramConflictError`). Перед запуском на новом сервере остановите бота на старом. Также добавьте IP нового сервера в список разрешённых для PostgreSQL, если база ограничивает доступ по IP.
 
 ### Подготовка сервера
 
@@ -137,7 +135,11 @@ cat autostart.log
 
 * `main.py` — точка входа и запуск бота через polling.
 * `handlers.py` — обработчики команд, сообщений и действий пользователя.
-* `service.py` — взаимодействие с API Timeweb.Hosting.
+* `service.py` — взаимодействие с API Timeweb.Hosting (в т.ч. получение токена при `/login`).
+* `repository.py` — единственное место, которое обращается к БД (`get_user`, `save_user`).
+* `models.py` — ORM-модель `User` (SQLAlchemy): `telegram_id`, `tw_login`, `tw_token`.
+* `db.py` — ленивое создание async-движка PostgreSQL (`asyncpg`) и фабрики сессий, создание таблиц при старте.
+* `states.py` — состояния диалога авторизации (FSM aiogram).
 * `keybords.py` — клавиатуры и кнопки Telegram-бота.
 * `config.py` — загрузка и хранение конфигурации из `.env`.
 * `texts.py` — тексты сообщений бота.

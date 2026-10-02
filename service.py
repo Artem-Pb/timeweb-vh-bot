@@ -1,5 +1,3 @@
-from enum import Enum
-
 import aiohttp
 import logging
 
@@ -9,26 +7,52 @@ import texts
 
 logger = logging.getLogger(__name__)
 
+ACCESS_URL = "https://api.timeweb.ru/v1.2/access"
 
-class ApiEndpoint(Enum):
-    URL_FOR_BALANCE = f"https://api.timeweb.ru/v1.1/finances/accounts/{config.LOGIN}"
-    URL_FOR_SITE = f"https://api.timeweb.ru/v1.1/sites/{config.LOGIN}"
-    HEADERS = {
+
+def _balance_url(login: str) -> str:
+    return f"https://api.timeweb.ru/v1.1/finances/accounts/{login}"
+
+
+def _sites_url(login: str) -> str:
+    return f"https://api.timeweb.ru/v1.1/sites/{login}"
+
+
+def _auth_headers(token: str) -> dict:
+    return {
         "Accept": "application/json",
-        "x-app-key": f"{config.API_KEY}",
-        "Authorization": f"Bearer {config.TOKEN}"
+        "x-app-key": config.API_KEY,
+        "Authorization": f"Bearer {token}",
     }
 
 
-async def check_balance(session: aiohttp.ClientSession) -> list[dict]:
-    return await _get(session, ApiEndpoint.URL_FOR_BALANCE.value, ApiEndpoint.HEADERS.value)
+async def login(session: aiohttp.ClientSession, login_value: str, password: str) -> str:
+    headers = {"Accept": "application/json", "x-app-key": config.API_KEY}
+    auth = aiohttp.BasicAuth(login_value, password)
+    try:
+        async with session.post(ACCESS_URL, headers=headers, auth=auth) as response:
+            if response.status == 200:
+                data = await response.json()
+                return data["token"]
+            error_msg = await response.text()
+            logger.error(f"{texts.LogTexts.AUTH_NOT_AVAILABLE.value} -> {ACCESS_URL} : "
+                         f"{texts.LogTexts.CODE.value} {response.status}, "
+                         f"{texts.LogTexts.ANSWER.value} {error_msg}")
+            raise exeptions.TimewebAuthError(error_msg)
+    except aiohttp.ClientError:
+        logger.exception(texts.LogTexts.SITE_IS_NOT_AVAILABLE.value)
+        raise
 
-async def check_sites(session: aiohttp.ClientSession) -> list[dict]:
-    all_sites = await _get(session, ApiEndpoint.URL_FOR_SITE.value, ApiEndpoint.HEADERS.value)
+
+async def check_balance(session: aiohttp.ClientSession, login_value: str, token: str) -> list[dict]:
+    return await _get(session, _balance_url(login_value), _auth_headers(token))
+
+async def check_sites(session: aiohttp.ClientSession, login_value: str, token: str) -> list[dict]:
+    all_sites = await _get(session, _sites_url(login_value), _auth_headers(token))
     return _extract_sites(all_sites)
 
-async def check_domains(session: aiohttp.ClientSession) -> list[dict]:
-    all_domains = await _get(session, ApiEndpoint.URL_FOR_SITE.value, ApiEndpoint.HEADERS.value)
+async def check_domains(session: aiohttp.ClientSession, login_value: str, token: str) -> list[dict]:
+    all_domains = await _get(session, _sites_url(login_value), _auth_headers(token))
     return _extract_domains(all_domains)
 
 async def _get(session: aiohttp.ClientSession, url: str, headers: dict) -> list[dict] :

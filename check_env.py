@@ -5,15 +5,22 @@ import aiohttp
 from aiogram import Bot
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.exceptions import TelegramAPIError
+from sqlalchemy import text as sql_text
+from sqlalchemy.exc import SQLAlchemyError
 
 import config
+import db
 import service
+from exeptions import TimewebAuthError
 
 REQUIRED_VARS = {
     "BOT_TOKEN": config.BOT_TOKEN,
     "TW_API_KEY": config.API_KEY,
-    "TOKEN": config.TOKEN,
-    "LOGIN": config.LOGIN,
+    "POSTGRESQL_HOST": config.POSTGRESQL_HOST,
+    "POSTGRESQL_PORT": config.POSTGRESQL_PORT,
+    "POSTGRESQL_USER": config.POSTGRESQL_USER,
+    "POSTGRESQL_PASSWORD": config.POSTGRESQL_PASSWORD,
+    "POSTGRESQL_DBNAME": config.POSTGRESQL_DBNAME,
 }
 
 
@@ -59,15 +66,31 @@ async def check_telegram() -> bool:
 
 
 async def check_timeweb() -> bool:
-    title = "Timeweb API"
+    title = "Timeweb API (сетевая доступность)"
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         try:
-            await service.check_balance(session)
-            _report(title, True, "доступен, авторизация верна")
+            await service.login(session, "check-env-probe", "check-env-probe")
+            _report(title, True, "сервер ответил")
             return True
-        except Exception as e:
-            _report(title, False, str(e))
+        except TimewebAuthError:
+            _report(title, True, "сервер ответил (заведомо неверные тестовые креды отклонены — хост доступен)")
+            return True
+        except (aiohttp.ClientError, asyncio.TimeoutError, OSError) as e:
+            hint = "" if config.PROXY_URL else " -- возможна блокировка на уровне хостинга"
+            _report(title, False, f"{e}{hint}")
             return False
+
+
+async def check_database() -> bool:
+    title = "PostgreSQL"
+    try:
+        async with db.get_engine().connect() as conn:
+            await conn.execute(sql_text("SELECT 1"))
+        _report(title, True, "подключение установлено")
+        return True
+    except SQLAlchemyError as e:
+        _report(title, False, str(e))
+        return False
 
 
 async def main() -> None:
@@ -76,6 +99,7 @@ async def main() -> None:
     results = [check_python_version(), check_required_vars()]
     results.append(await check_telegram())
     results.append(await check_timeweb())
+    results.append(await check_database())
 
     print()
     if all(results):

@@ -9,6 +9,7 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 
 import config
+import db
 from handlers import user_router
 
 log_format ="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -30,11 +31,14 @@ logger = logging.getLogger(__name__)
 async def startup(dispatcher: Dispatcher):
     session = aiohttp.ClientSession()
     dispatcher["http_session"] = session
+    await db.init_models()
+    dispatcher["db_session_factory"] = db.get_session_factory()
     logger.info("Starting up")
 
 async def shutdown(dispatcher: Dispatcher):
     session: aiohttp.ClientSession = dispatcher["http_session"]
     await session.close()
+    await db.get_engine().dispose()
     logger.info("Shutting down")
 
 
